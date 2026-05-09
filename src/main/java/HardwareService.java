@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Scanner;
 import java.util.List;
+import javax.swing.JOptionPane;
+import javax.swing.UIManager;
 
 public class HardwareService {
 
@@ -63,9 +65,9 @@ public class HardwareService {
         // Exibe o relatório detalhado no terminal como solicitado
         System.out.println(relatorioConsole.toString());
 
-        // Retorna a linha formatada para o CSV (Hostname;Maquina;CPU;RAM;Discos)
+        // Adicionamos um delimitador claro ao final da string de discos
         return String.format("%s;%s %s;%s;%dGB %s;%s", 
-                hostname, fabricante, modeloMaquina, nomeCPU, totalRamGB, detalhesRam, dadosDiscosCSV.toString().trim());
+        hostname, fabricante, modeloMaquina, nomeCPU, totalRamGB, detalhesRam, dadosDiscosCSV.toString().trim());
     }
 
     // Método auxiliar para tentar ler o status básico do disco via WMIC
@@ -107,23 +109,38 @@ public class HardwareService {
     }
 
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        HardwareService service = new HardwareService();
-
-        System.out.println("###############################");
-        System.out.println("#      NEXA FIELD SYSTEM      #");
-        System.out.println("###############################");
+        try {
+            // Deixa a janela com a cara do Windows
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         
-        System.out.print("Informe o nome do Cliente: ");
-        String nomeCliente = scanner.nextLine();
+            HardwareService service = new HardwareService();
 
-        System.out.println("\nProcessando hardware, aguarde...");
-        String dadosFormatados = service.capturarDados();
+            // Box bonitinha para indicar o cliente
+            String nomeCliente = JOptionPane.showInputDialog(null, 
+                "Digite o nome do Cliente para iniciar o inventário:", 
+                "NEXA FIELD SYSTEM", 
+                JOptionPane.QUESTION_MESSAGE);
 
-        service.salvarRelatorio(nomeCliente, dadosFormatados);
+            if (nomeCliente == null || nomeCliente.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Operação cancelada. O nome do cliente é obrigatório.");
+                return;
+            }
 
-        System.out.println("\n[Pressione ENTER para encerrar]");
-        scanner.nextLine();
-        scanner.close();
+            // Coleta e Salva
+            String dadosFormatados = service.capturarDados();
+            service.salvarRelatorio(nomeCliente, dadosFormatados);
+
+            // Alerta de Sucesso
+            JOptionPane.showMessageDialog(null, "Inventário concluído e salvo para o cliente: " + nomeCliente);
+
+            // Abre o Dashboard
+            File htmlFile = new File("index.html");
+            if (htmlFile.exists()) {
+                java.awt.Desktop.getDesktop().browse(htmlFile.toURI());
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Erro na execução: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }
