@@ -1,0 +1,148 @@
+:root {
+    --primary-color: #007bff;
+    --bg-dark: #121212;
+    --card-bg: #1e1e1e;
+    --text-color: #e0e0e0;
+    --border-color: #333;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    color: var(--text-color);
+    
+    /* Configurações de Background */
+    background-image: url('./img/star.jpg'); /* Verifique se o nome é EXATAMENTE este */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-color: #121212; /* Cor de fundo caso a imagem falhe */
+    
+    /* Garante que o corpo tenha altura mínima da tela */
+    min-height: 100vh; 
+}
+
+header {
+    text-align: center;
+    padding-bottom: 30px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 30px;
+}
+
+h1 { color: var(--primary-color); margin: 0; }
+
+.container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    /* Background com transparência (0.7) */
+    background-color: rgba(30, 30, 30, 0.7); 
+    /* Efeito de desfoque no fundo do card */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    transition: transform 0.2s;
+    overflow: hidden; /* Garante que o conteúdo não saia do card */
+    display: flex;
+    flex-direction: column;
+}
+
+.card:hover { transform: translateY(-5px); }
+
+.card-header {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.info-item {
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.info-label {
+    color: #888;
+    display: block;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+.status-badge {
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 0.75rem;
+    background: #28a745;
+    color: white;
+}
+
+/* ... mantenha o código anterior e adicione estas classes ao final ... */
+
+.card.warning {
+    border-left: 5px solid #ffc107;
+}
+
+.card.danger {
+    border-left: 5px solid #dc3545;
+}
+
+.badge-warning {
+    background: #ffc107;
+    color: #000;
+}
+
+.badge-danger {
+    background: #dc3545;
+    color: #fff;
+}
+
+/* Pequeno ajuste para destacar valores baixos */
+.low-value {
+    font-weight: bold;
+    color: #ffc107;
+}
+
+/* Organiza os discos em lista */
+.disk-list {
+    max-height: 200px; /* Evita que o card cresça demais se tiver muitos discos */
+    overflow-y: auto;  /* Adiciona scroll se necessário */
+    padding-right: 5px;
+}
+
+.disk-item {
+    display: block;
+    padding: 4px 0;
+    border-bottom: 1px solid #333;
+    font-size: 0.85rem;
+}
+
+.disk-item:last-child {
+    border-bottom: none;
+}
+
+/* Botão de Exportar */
+.btn-export {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 10px;
+    transition: background 0.3s;
+}
+
+.btn-export:hover {
+    background-color: #218838;
+}
