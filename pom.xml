@@ -1,0 +1,12 @@
+<!-- Para informações de Hardware -->
+<dependency>
+    <groupId>com.github.oshi</groupId>
+    <artifactId>oshi-core</artifactId>
+    <version>6.4.0</version>
+</dependency>
+<!-- Para gerar o Excel no final -->
+<dependency>
+    <groupId>org.apache.poi</groupId>
+    <artifactId>poi-ooxml</artifactId>
+    <version>5.2.3</version>
+</dependency>
