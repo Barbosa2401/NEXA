@@ -5,6 +5,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -49,6 +51,12 @@ public class HardwareService {
         relatorioConsole.append("Máquina: ").append(fabricante).append(" ").append(modeloMaquina).append("\n");
         relatorioConsole.append("CPU: ").append(nomeCPU).append("\n");
 
+        // Captura o Serial Number (Service Tag)
+        String serialNumber = system.getSerialNumber();
+
+        // Captura a data atual
+        String dataColeta = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
         // 4. Memória RAM (Total e Detalhes)
         GlobalMemory memory = hardware.getMemory();
         long totalRamGB = memory.getTotal() / (1024 * 1024 * 1024);
@@ -65,9 +73,9 @@ public class HardwareService {
         // Exibe o relatório detalhado no terminal como solicitado
         System.out.println(relatorioConsole.toString());
 
-        // Adicionamos um delimitador claro ao final da string de discos
-        return String.format("%s;%s %s;%s;%dGB %s;%s", 
-        hostname, fabricante, modeloMaquina, nomeCPU, totalRamGB, detalhesRam, dadosDiscosCSV.toString().trim());
+        // Atualize o return para incluir esses dois novos campos
+        return String.format("%s;%s %s;%s;%s;%dGB %s;%s;%s", 
+        hostname, fabricante, modeloMaquina, serialNumber, nomeCPU, totalRamGB, detalhesRam, dadosDiscosCSV.toString().trim(), dataColeta);
     }
 
     // Método auxiliar para tentar ler o status básico do disco via WMIC
@@ -98,7 +106,7 @@ public class HardwareService {
             try (FileWriter fw = new FileWriter(arquivo, true)) {
                 if (arquivoNovo) {
                     // Cabeçalho do Excel/CSV
-                    fw.write("Hostname;Fabricante_Modelo;Processador;Memoria_RAM;Discos_Detectados\n");
+                    fw.write("Hostname;Fabricante_Modelo;Serial_Number;Processador;Memoria_RAM;Discos_Detectados;Data_Coleta\n");
                 }
                 fw.write(linhaCSV + "\n");
             }
@@ -115,32 +123,53 @@ public class HardwareService {
         
             HardwareService service = new HardwareService();
 
-            // Box bonitinha para indicar o cliente
+            // Box de identificação do cliente
             String nomeCliente = JOptionPane.showInputDialog(null, 
                 "Digite o nome do Cliente para iniciar o inventário:", 
                 "NEXA FIELD SYSTEM", 
                 JOptionPane.QUESTION_MESSAGE);
 
             if (nomeCliente == null || nomeCliente.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Operação cancelada. O nome do cliente é obrigatório.");
+                JOptionPane.showMessageDialog(null, "Operação cancelada.");
                 return;
             }
 
-            // Coleta e Salva
+            // Coleta e Salva os dados
             String dadosFormatados = service.capturarDados();
             service.salvarRelatorio(nomeCliente, dadosFormatados);
 
-            // Alerta de Sucesso
-            JOptionPane.showMessageDialog(null, "Inventário concluído e salvo para o cliente: " + nomeCliente);
+            // Pergunta sobre o Dashboard
+            int resposta = JOptionPane.showConfirmDialog(null, 
+                "Coleta realizada com sucesso!\n\nDeseja abrir o Dashboard agora?", 
+                "NEXA FIELD SYSTEM", 
+                JOptionPane.YES_NO_OPTION);
 
-            // Abre o Dashboard
-            File htmlFile = new File("index.html");
-            if (htmlFile.exists()) {
-                java.awt.Desktop.getDesktop().browse(htmlFile.toURI());
+            if (resposta == JOptionPane.YES_OPTION) {
+            try {
+                // Pega o arquivo index.html na mesma pasta onde o .exe está rodando
+                File htmlFile = new File("a.html").getAbsoluteFile();
+                // USE EXATAMENTE ASSIM:
+                if (htmlFile.exists()) {
+                    java.awt.Desktop.getDesktop().browse(htmlFile.toURI());
+                }
+        
+                if (htmlFile.exists()) {
+                    // Usa a URI correta para evitar o erro de "file:/G://"
+                    java.awt.Desktop.getDesktop().browse(htmlFile.toURI());
+                } else {
+                    JOptionPane.showMessageDialog(null, "Arquivo index.html não encontrado em: " + htmlFile.getAbsolutePath());
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Erro ao abrir o navegador: " + e.getMessage());
             }
+        }
+
+            // Alerta final e encerramento
+            JOptionPane.showMessageDialog(null, "Inventário concluído para: " + nomeCliente);
+            System.exit(0);
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Erro na execução: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Erro crítico: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
-    }
-}
+    } // FIM DO MAIN
+} // FIM DA CLASSE (Certifique-se de que esta chave existe!)
