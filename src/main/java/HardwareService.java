@@ -145,24 +145,22 @@ public class HardwareService {
                 JOptionPane.YES_NO_OPTION);
 
             if (resposta == JOptionPane.YES_OPTION) {
-            try {
-                // Pega o arquivo index.html na mesma pasta onde o .exe está rodando
-                File htmlFile = new File("a.html").getAbsoluteFile();
-                // USE EXATAMENTE ASSIM:
-                if (htmlFile.exists()) {
-                    java.awt.Desktop.getDesktop().browse(htmlFile.toURI());
+                try {
+                    // Volte o nome para index.html (ou a.html se ainda estiver testando)
+                    File htmlFile = new File("index.html").getAbsoluteFile();
+
+                    if (htmlFile.exists()) {
+                        // MUDANÇA CRUCIAL AQUI: Use 'open' (arquivo) em vez de 'browse' (link)
+                        if (java.awt.Desktop.isDesktopSupported()) {
+                            java.awt.Desktop.getDesktop().open(htmlFile); 
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Arquivo não encontrado na raiz do pendrive: " + htmlFile.getAbsolutePath());
+                    }
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(null, "Erro ao abrir o arquivo: " + e.getMessage());
                 }
-        
-                if (htmlFile.exists()) {
-                    // Usa a URI correta para evitar o erro de "file:/G://"
-                    java.awt.Desktop.getDesktop().browse(htmlFile.toURI());
-                } else {
-                    JOptionPane.showMessageDialog(null, "Arquivo index.html não encontrado em: " + htmlFile.getAbsolutePath());
-                }
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(null, "Erro ao abrir o navegador: " + e.getMessage());
             }
-        }
 
             // Alerta final e encerramento
             JOptionPane.showMessageDialog(null, "Inventário concluído para: " + nomeCliente);

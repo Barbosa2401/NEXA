@@ -13,7 +13,7 @@ body {
     color: var(--text-color);
     
     /* Configurações de Background */
-    background-image: url('./img/star.jpg'); /* Verifique se o nome é EXATAMENTE este */
+    background-image: url('./img/house.jpg'); /* Verifique se o nome é EXATAMENTE este */
     background-size: cover;
     background-position: center;
     background-attachment: fixed;

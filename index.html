@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>NEXA</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="icon.jpg">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<header>
+    <h1>NEXA FIELD SYSTEM</h1>
+    
+    <!-- Painel de Controle: Busca, Data e Contador -->
+    <div class="stats-panel">
+        <div class="filter-group">
+            <input type="text" id="searchInput" class="search-box" placeholder="Buscar Hostname ou CPU...">
+            <select id="dateFilter" class="search-box">
+                <option value="all">Todas as Datas</option>
+            </select>
+        </div>
+        
+        <div class="counter-group">
+            <span style="color: #888;">Máquinas Detectadas: </span>
+            <span id="machineCount" style="font-weight: bold; color: #007bff; font-size: 1.2rem;">0</span>
+        </div>
+
+        <div>
+            <input type="file" id="csvFile" accept=".csv" style="display: none;">
+            <button class="btn-export" onclick="document.getElementById('csvFile').click()">Selecionar CSV</button>
+            <button class="btn-export" id="exportBtn" style="display: none; background-color: #28a745;">Exportar Excel</button>
+        </div>
+    </div>
+</header>
+
+<div class="container" id="dashboard">
+    <!-- Os cards aparecerão aqui -->
+</div>
+
+<script>
+    let currentData = [];
+
+    // Listener para o arquivo
+    document.getElementById('csvFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        Papa.parse(file, {
+            header: true,
+            delimiter: ";",
+            skipEmptyLines: true,
+            complete: function(results) {
+            currentData = results.data;
+    
+            // 1. Atualiza o seletor de datas com todo o histórico
+            updateDateFilter(currentData);
+    
+            // 2. Identifica qual é a data mais recente no arquivo
+            const datasDisponiveis = [...new Set(currentData.map(m => m.Data_Coleta))].filter(d => d);
+    
+            if (datasDisponiveis.length > 0) {
+                // Pega a última data da lista (a mais recente)
+                const dataMaisRecente = datasDisponiveis[datasDisponiveis.length - 1];
+        
+                // Define o filtro para mostrar apenas o trabalho de hoje por padrão
+                document.getElementById('dateFilter').value = dataMaisRecente;
+            }
+
+            // 3. Aplica os filtros e atualiza o contador (que mostrará apenas o total do dia)
+            applyFilters();
+            document.getElementById('exportBtn').style.display = 'inline-block';
+        }
+        });
+    });
+
+    function updateDateFilter(data) {
+        const dateSelect = document.getElementById('dateFilter');
+        const dates = [...new Set(data.map(m => m.Data_Coleta))].filter(d => d);
+        dateSelect.innerHTML = '<option value="all">Todas as Datas</option>';
+        dates.forEach(date => {
+            dateSelect.innerHTML += `<option value="${date}">${date}</option>`;
+        });
+    }
+
+    function applyFilters() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const selectedDate = document.getElementById('dateFilter').value;
+
+        const filtered = currentData.filter(m => {
+            const hostname = (m.Hostname || "").toLowerCase();
+            const cpu = (m.Processador || "").toLowerCase();
+            const matchSearch = hostname.includes(searchTerm) || cpu.includes(searchTerm);
+            const matchDate = selectedDate === "all" || m.Data_Coleta === selectedDate;
+            return matchSearch && matchDate;
+        });
+
+        document.getElementById('machineCount').innerText = filtered.length;
+        renderCards(filtered);
+    }
+
+    // Listeners para busca e data
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('dateFilter').addEventListener('change', applyFilters);
+
+    function renderCards(data) {
+        const container = document.getElementById('dashboard');
+        container.innerHTML = ""; 
+
+        data.forEach(maquina => {
+            if(!maquina.Hostname) return;
+
+            // Limpeza de vício de hostname no campo disco
+            let discosRaw = maquina.Discos_Detectados || "";
+            if (discosRaw.includes(maquina.Hostname)) {
+                discosRaw = discosRaw.split(maquina.Hostname)[0].trim();
+            }
+
+            const discosArray = discosRaw.split(/\)\s*|;/).filter(d => d.trim() !== "");
+            const listaDiscosHtml = discosArray.map(d => {
+                let txt = d.trim();
+                if(!txt.endsWith(')')) txt += ')';
+                return `<span class="disk-item">• ${txt}</span>`;
+            }).join('');
+
+            const ramValue = parseInt(maquina.Memoria_RAM) || 0;
+            const alertClass = ramValue < 8 ? "danger" : (ramValue === 8 ? "warning" : "");
+
+            const card = document.createElement('div');
+            card.className = `card ${alertClass}`;
+            card.innerHTML = `
+                <div class="card-header">
+                    <span>${maquina.Hostname}</span>
+                    <span class="status-badge">${maquina.Data_Coleta || 'Sem Data'}</span>
+                </div>
+                <div class="info-item"><span class="info-label">Serial Number</span>${maquina.Serial_Number || 'N/A'}</div>
+                <div class="info-item"><span class="info-label">Equipamento</span>${maquina.Fabricante_Modelo}</div>
+                <div class="info-item"><span class="info-label">Processador</span>${maquina.Processador}</div>
+                <div class="info-item"><span class="info-label">Memória RAM</span>${maquina.Memoria_RAM}</div>
+                <div class="info-item">
+                    <span class="info-label">Armazenamento</span>
+                    <div class="disk-list">${listaDiscosHtml}</div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    document.getElementById('exportBtn').addEventListener('click', function() {
+        const ws = XLSX.utils.json_to_sheet(currentData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+        XLSX.writeFile(wb, "Relatorio_NEXA_Field.xlsx");
+    });
+</script>
+</body>
+</html>
